@@ -272,6 +272,7 @@ class PengajuanController extends Controller
         abort_unless(collect($pengajuan->jenis->isian)->where('tipe', 'file')->pluck('key')->contains($key), 404);
         $path = $pengajuan->data[$key] ?? null;
         abort_unless($path && Storage::exists($path), 404);
+        // Berkas diambil dari disk (Google Drive) lalu ditampilkan oleh aplikasi; pengguna tidak perlu akses Drive
         return Storage::response($path);
     }
 

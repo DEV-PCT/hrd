@@ -45,6 +45,10 @@
                             <span class="text-muted">-</span>
                         @elseif ($f['tipe'] === 'file')
                             <a href="{{ route('pengajuan.berkas', [$p, $f['key']]) }}" target="_blank"><i class="bi bi-file-earmark-text me-1"></i>Lihat berkas</a>
+                            {{-- Tautan Google Drive: hanya bisa dibuka akun anggota Shared Drive HRD --}}
+                            @if (config('filesystems.default') === 'google' && ($drive = rescue(fn () => \Illuminate\Support\Facades\Storage::url($v), null, false)))
+                                <a href="{{ $drive }}" target="_blank" rel="noopener" class="ms-3 small"><i class="bi bi-google me-1"></i>Buka di Google Drive</a>
+                            @endif
                         @elseif ($f['tipe'] === 'pegawai')
                             {{ $v }} @if ($hp = \App\Models\JenisPengajuan::hpPegawai($v))<br><a href="https://wa.me/{{ preg_replace(['/\D/', '/^0/'], ['', '62'], $hp) }}" target="_blank" class="small"><i class="bi bi-whatsapp me-1"></i>{{ $hp }}</a>@endif
                         @elseif ($f['tipe'] === 'rupiah')

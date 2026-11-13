@@ -38,6 +38,21 @@ return [
             'throw' => false,
         ],
 
+        // Google Shared Drive (mis. "HRD Berkas") via service account. Aktifkan dengan FILESYSTEM_DISK=google.
+        // Kredensial service account diambil dari .env (client_email & private_key dari berkas JSON kunci).
+        'google' => [
+            'driver' => 'google',
+            'credentials' => [
+                'client_email' => env('GDRIVE_CLIENT_EMAIL', ''),
+                'private_key' => env('GDRIVE_PRIVATE_KEY', ''),
+                'token_uri' => env('GDRIVE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+            ],
+            'shared_drive_id' => env('GDRIVE_SHARED_DRIVE_ID', ''),
+            'shared_drive_name' => env('GDRIVE_SHARED_DRIVE_NAME', 'HRD Berkas'),
+            'folder_id' => env('GDRIVE_FOLDER_ID', ''), // opsional: subfolder akar di dalam Shared Drive
+            'throw' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

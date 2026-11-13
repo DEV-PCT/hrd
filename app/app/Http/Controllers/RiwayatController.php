@@ -134,6 +134,7 @@ class RiwayatController extends Controller
             || ($riwayat->dosen_id && $riwayat->dosen_id == $akun->dosen_id));
         abort_unless($this->isAdmin() || $pemilik, 403);
         abort_unless($riwayat->berkas && Storage::exists($riwayat->berkas), 404);
+        // Berkas diambil dari disk (Google Drive) lalu ditampilkan oleh aplikasi; pengguna tidak perlu akses Drive
         return Storage::response($riwayat->berkas);
     }
 

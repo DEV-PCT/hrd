@@ -21,5 +21,15 @@ class AppServiceProvider extends ServiceProvider
         // Audit: login & logout (semua jalur: password eUniversity maupun OTP)
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, fn () => \App\Models\AuditLog::catat('login'));
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Logout::class, fn () => \App\Models\AuditLog::catat('logout'));
+
+        // Disk "google": berkas unggahan di Google Shared Drive lewat service account (adapter buatan sendiri)
+        \Illuminate\Support\Facades\Storage::extend('google', function ($app, array $config) {
+            $client = new \App\Services\GoogleDrive\DriveClient(
+                $config['credentials'],$config['shared_drive_id'] ?: null, $config['shared_drive_name'] ?: null
+            );
+            $adapter = new \App\Services\GoogleDrive\GoogleDriveAdapter($client, $config['folder_id'] ?: null);
+
+            return new \Illuminate\Filesystem\FilesystemAdapter(new \League\Flysystem\Filesystem($adapter, $config), $adapter, $config);
+        });
     }
 }
