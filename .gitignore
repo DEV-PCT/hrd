@@ -33,5 +33,9 @@ yarn-error.log
 !/public_html/berkas/.htaccess
 !/public_html/berkas/web.config
 
-/.claude
+.claude/
 /docs
+# File bawaan hosting SiteGround
+/logs
+/webstats
+/public_html/Default.html
