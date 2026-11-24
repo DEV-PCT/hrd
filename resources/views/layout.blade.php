@@ -85,6 +85,9 @@
         .chip.merah { background: #ffd9dc; color: #b42318 !important; font-weight: 600 !important; display: inline-block; padding: .15em .5em; border-radius: 999px; }
         .absen { display: inline-block; margin-top: 2px; font-size: .7rem; padding: .05em .45em; border-radius: 999px; background: #eef2f6; color: #475467; border: 1px solid #dde3ea; }
         .tabel-bulan .kolom-total { font-weight: 700; color: #0d6efd; background: #f1f6ff !important; }
+        /* Sapaan Dashboard Saya */
+        .content .card.sapaan { background: linear-gradient(120deg, #0d6efd, #17a2b8); color: #fff; }
+        .sapaan .ikon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.6rem; background: rgba(255,255,255,.2); color: #fff; }
         @media (min-width: 992px) { .sidebar { position: fixed; top: 0; bottom: 0; } .content { margin-left: 240px; } }
 
         /* Bilah progres AJAX (hrd.js) */

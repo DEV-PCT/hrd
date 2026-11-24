@@ -23,7 +23,7 @@
     <thead class="table-light sticky-top"><tr><th style="width:40px">No</th>@foreach ($kolom as $k)<th class="text-nowrap">{{ $k }}</th>@endforeach</tr></thead>
     <tbody>
     @forelse ($baris as $i => $b)
-        <tr><td class="text-muted">{{ $i + 1 }}</td>@foreach ($b as $v)<td class="{{ is_int($v) ? 'text-end' : '' }}">{{ $v }}</td>@endforeach</tr>
+        <tr><td class="text-muted">{{ $i + 1 }}</td>@foreach ($b as $v)<td class="{{ is_int($v) ? 'text-end' : '' }} {{ mb_strlen((string) $v) <= 40 ? 'text-nowrap' : '' }}">{{ $v }}</td>@endforeach</tr>
     @empty
         <tr><td colspan="{{ count($kolom) + 1 }}" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td></tr>
     @endforelse

@@ -10,12 +10,12 @@
 @endsection
 
 @section('content')
-<div class="card mb-3">
+<div class="card mb-3 sapaan">
     <div class="card-body d-flex flex-wrap gap-3 align-items-center">
-        <div class="ikon flex-shrink-0" style="width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#e7f0ff;color:#0d6efd;font-size:1.5rem"><i class="bi bi-person"></i></div>
+        <div class="ikon flex-shrink-0"><i class="bi bi-person"></i></div>
         <div class="flex-grow-1">
             <div class="fs-5 fw-semibold">Halo, {{ $akun->name }}</div>
-            <div class="text-muted small">
+            <div class="small opacity-75">
                 @if ($staff)
                     {{ $staff->level }} · {{ $staff->divisi }} · Atasan: {{ $staff->atasan->nama ?? 'belum diatur' }}
                 @else
@@ -23,7 +23,7 @@
                 @endif
             </div>
         </div>
-        @if ($staff)<a href="{{ route('staff.show', $staff) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person-vcard me-1"></i>Profil Saya</a>@endif
+        @if ($staff)<a href="{{ route('staff.show', $staff) }}" class="btn btn-light btn-sm"><i class="bi bi-person-vcard me-1"></i>Profil Saya</a>@endif
     </div>
 </div>
 
