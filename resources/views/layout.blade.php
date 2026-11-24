@@ -41,6 +41,45 @@
         .batang-isi { background: #0d6efd; height: 100%; border-radius: 4px; min-width: 2px; }
         .batang-isi.kosong { background: #adb5bd; }
         .batang-nilai { text-align: right; font-variant-numeric: tabular-nums; color: #495057; }
+
+        /* ===== Tampilan global (gaya BAAK): kartu lembut, header beraksen, tabel & tab lebih hidup ===== */
+        body.bg-light { background: #f4f6f9 !important; }
+        .content .card { border: 0; border-radius: .6rem; box-shadow: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); }
+        .content .card > .card-header { background: #fff; border-bottom: 1px solid #eef0f3; font-weight: 600; color: #344054;
+            padding: .8rem 1rem; border-left: 4px solid #0d6efd; border-radius: .6rem .6rem 0 0; }
+        .content .card > .card-header .bi:first-child { color: #0d6efd; }
+        .content .row > [class*=col]:nth-child(4n+2) > .card > .card-header { border-left-color: #28a745; }
+        .content .row > [class*=col]:nth-child(4n+2) > .card > .card-header .bi:first-child { color: #28a745; }
+        .content .row > [class*=col]:nth-child(4n+3) > .card > .card-header { border-left-color: #fd7e14; }
+        .content .row > [class*=col]:nth-child(4n+3) > .card > .card-header .bi:first-child { color: #fd7e14; }
+        .content .row > [class*=col]:nth-child(4n) > .card > .card-header { border-left-color: #6f42c1; }
+        .content .row > [class*=col]:nth-child(4n) > .card > .card-header .bi:first-child { color: #6f42c1; }
+        .content .list-group-item-action:hover { background: #f5f9ff; }
+        /* Tabel */
+        .content .table > thead th { background: #f1f5fb !important; color: #475467; font-size: .78rem; text-transform: uppercase; letter-spacing: .02em; border-bottom: 2px solid #dbe4f0; white-space: nowrap; }
+        .content .table > tbody tr:hover > * { background: #f8fbff; }
+        .content .table td, .content .table th { vertical-align: middle; }
+        .content h6.text-uppercase, .content .small.text-uppercase { color: #0d6efd !important; letter-spacing: .03em; }
+        /* Tab */
+        .content .nav-tabs { border-bottom: 2px solid #e4e8ee; gap: .25rem; }
+        .content .nav-tabs .nav-link { border: 0; color: #667085; font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+        .content .nav-tabs .nav-link:hover { color: #0d6efd; background: #eef4ff; }
+        .content .nav-tabs .nav-link.active { color: #0d6efd; background: transparent; border-bottom-color: #0d6efd; }
+        /* Badge & tombol */
+        .content .badge { font-weight: 600; padding: .38em .6em; }
+        .content .btn { border-radius: .45rem; }
+        /* Batang: gradasi + warna bergiliran per baris */
+        .batang { border-radius: 4px; padding: 4px 2px; }
+        .batang-jalur { height: 14px; border-radius: 7px; background: #eef1f5; }
+        .batang-isi { border-radius: 7px; background: linear-gradient(90deg, #4f8bff, #0d6efd); }
+        .batang:nth-child(5n+2) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #3ecf8e, #28a745); }
+        .batang:nth-child(5n+3) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #ffb547, #fd7e14); }
+        .batang:nth-child(5n+4) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #3fd0e4, #17a2b8); }
+        .batang:nth-child(5n+5) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #a07ee6, #6f42c1); }
+        .batang-nilai { font-weight: 600; color: #344054; }
+        /* Sorotan sel peta panas (bg-warning-subtle dll.) lebih tegas */
+        .content .table .bg-warning-subtle, .content .table .table-warning { background: #ffe8a3 !important; font-weight: 600; }
+        .content .table .bg-danger-subtle { background: #ffd0d4 !important; font-weight: 600; }
         @media (min-width: 992px) { .sidebar { position: fixed; top: 0; bottom: 0; } .content { margin-left: 240px; } }
 
         /* Bilah progres AJAX (hrd.js) */
