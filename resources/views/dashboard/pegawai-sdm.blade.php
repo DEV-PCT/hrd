@@ -157,6 +157,15 @@
 
 @elseif ($tab === 'disc')
     @php($D = \App\Models\Disc::class)
+    {{-- Warna gaya memimpin (sama di matriks, legenda & badge) dan warna klasik DISC --}}
+    @php($warnaGaya = ['Tinggi' => '#28a745', 'Menengah' => '#0d6efd', 'Cukup' => '#f0ad00', 'Rendah' => '#dc3545'])
+    @php($warnaDisc = ['D' => '#dc3545', 'I' => '#f0ad00', 'S' => '#28a745', 'C' => '#0d6efd'])
+    @php($namaDisc = ['D' => 'Dominance', 'I' => 'Influence', 'S' => 'Steadiness', 'C' => 'Compliance'])
+    @php($km = request('km')) @php($kp = request('kp'))
+    @php($tampil = $baris->when($km, fn ($c) => $c->where('katKomitmen', $km))->when($kp, fn ($c) => $c->where('katKompetensi', $kp)))
+    @php($maksSel = max(1, collect($matriks)->flatten()->max()))
+    @php($totalDom = max(1, $dominan->sum()))
+    @php($teratas = $dominan->except('?')->sortDesc()->keys()->first())
     <form class="bar-filter rounded-0">
         <input type="hidden" name="tab" value="disc">
         <select name="tim" class="form-select" onchange="this.form.submit()">
@@ -167,54 +176,79 @@
         <span class="info">{{ $baris->count() }} orang dipetakan</span>
     </form>
     <div class="card-body">
-        <div class="row g-3">
+        @include('_kartu-angka', ['kolom' => 'row-cols-1 row-cols-sm-2 row-cols-xl-4', 'kartu' => [
+            ['Dipetakan', $baris->count(), 'people', null, $tim ?: 'semua tim', 'info'],
+            ['Gaya dominan terbanyak', $teratas ?? '–', 'person-badge', null, $teratas ? $namaDisc[$teratas] . ' · ' . $dominan[$teratas] . ' orang' : '', 'purple'],
+            ['Siap Delegating', $baris->where('katKomitmen', 'Tinggi')->count(), 'send-check', null, 'komitmen tinggi', 'success'],
+            ['Perlu Coaching / Directing', $baris->whereIn('katKomitmen', ['Cukup', 'Rendah'])->count(), 'mortarboard', null, 'komitmen cukup / rendah', 'danger'],
+        ]])
+        <div class="row g-4">
             <div class="col-lg-7">
-                <h6 class="small text-muted text-uppercase fw-semibold">Komitmen × Kompetensi → cara memimpin</h6>
-                <table class="table table-sm table-bordered small text-center mb-0">
-                    <tr class="table-light"><th class="text-start">Komitmen ↓ / Kompetensi →</th>@foreach ($D::GAYA as $k => $g)<th>{{ $k }}</th>@endforeach</tr>
-                    @foreach ($matriks as $km => $baris2)
-                        <tr><th class="text-start table-light">{{ $km }} <small class="text-muted fw-normal">({{ $D::GAYA[$km] }})</small></th>
-                            @foreach ($baris2 as $n)<td class="{{ $n ? 'bg-primary-subtle fw-semibold' : 'text-muted' }}">{{ $n ?: '·' }}</td>@endforeach</tr>
+                <h6 class="small text-uppercase fw-semibold">Komitmen × Kompetensi → cara memimpin</h6>
+                <table class="table table-sm small text-center mb-2 matriks-disc">
+                    <tr><th class="text-start">Komitmen ↓ / Kompetensi →</th>@foreach ($D::GAYA as $k => $g)<th>{{ $k }}</th>@endforeach</tr>
+                    @foreach ($matriks as $rk => $baris2)
+                        <tr><th class="text-start">{{ $rk }} <small class="text-muted fw-normal">({{ $D::GAYA[$rk] }})</small></th>
+                            @foreach ($baris2 as $ck => $n)
+                                @php($w = $rk === $ck ? $warnaGaya[$rk] : '#667085')
+                                @php($alpha = $n ? str_pad(dechex((int) round(30 + 160 * $n / $maksSel)), 2, '0', STR_PAD_LEFT) : '00')
+                                @php($aktif = $km === $rk && $kp === $ck)
+                                <td class="p-1">@if ($n)<a href="{{ $aktif ? route('dashboard.pegawai', ['tab' => 'disc', 'tim' => $tim]) : route('dashboard.pegawai', ['tab' => 'disc', 'tim' => $tim, 'km' => $rk, 'kp' => $ck]) }}#tabel-disc"
+                                    class="sel {{ $aktif ? 'aktif' : '' }}" style="background:{{ $w }}{{ $alpha }};color:{{ $n / $maksSel > .5 && $w !== '#f0ad00' ? '#fff' : '#344054' }}" title="{{ $n }} orang · klik untuk menyaring">{{ $n }}</a>@else<span class="sel kosong">·</span>@endif</td>
+                            @endforeach
+                        </tr>
                     @endforeach
                 </table>
-                <div class="small text-muted mt-1">Tinggi → Delegating, Menengah → Supporting, Cukup → Coaching, Rendah → Directing.</div>
+                <div class="d-flex flex-wrap gap-2 small">
+                    @foreach ($D::GAYA as $k => $g)<span class="chip-nama m-0" style="background:{{ $warnaGaya[$k] }}1a;border-color:{{ $warnaGaya[$k] }}55"><span class="titik" style="background:{{ $warnaGaya[$k] }}"></span>{{ $k }} → {{ $g }}</span>@endforeach
+                    <span class="text-muted align-self-center">· warna lebih pekat = lebih banyak orang · klik sel untuk menyaring</span>
+                </div>
             </div>
             <div class="col-lg-5">
-                <h6 class="small text-muted text-uppercase fw-semibold">Gaya DISC dominan</h6>
+                <h6 class="small text-uppercase fw-semibold">Gaya DISC dominan</h6>
                 @php($maks = max(1, $dominan->max() ?? 1))
-                @foreach ($dominan as $g => $n)
-                    <div class="batang"><div>{{ ['D' => 'D · Dominance', 'I' => 'I · Influence', 'S' => 'S · Steadiness', 'C' => 'C · Compliance'][$g] ?? $g }}</div>
-                        <div class="batang-jalur"><div class="batang-isi" style="width:{{ $n / $maks * 100 }}%"></div></div><div class="batang-nilai">{{ $n }}</div></div>
+                @foreach ($dominan->sortKeys()->sortBy(fn ($n, $g) => $g === '?' ? 1 : 0) as $g => $n)
+                    @php($w = $warnaDisc[$g] ?? '#adb5bd')
+                    <div class="batang"><div>@if (isset($namaDisc[$g]))<span class="chip-disc" style="background:{{ $w }}">{{ $g }}</span> {{ $namaDisc[$g] }}@else<span class="text-muted">Belum diisi</span>@endif</div>
+                        <div class="batang-jalur"><div class="batang-isi" style="width:{{ $n / $maks * 100 }}%;background:{{ $w }}"></div></div>
+                        <div class="batang-nilai">{{ $n }}<small class="text-muted fw-normal"> · {{ round($n / $totalDom * 100) }}%</small></div></div>
                 @endforeach
             </div>
         </div>
     </div>
 </div>
 
-
-<div class="card">
+<div class="card" id="tabel-disc">
+    @if ($km || $kp)
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Disaring: komitmen <strong>{{ $km }}</strong> × kompetensi <strong>{{ $kp }}</strong> · {{ $tampil->count() }} orang</span>
+            <a href="{{ route('dashboard.pegawai', ['tab' => 'disc', 'tim' => $tim]) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Hapus saringan</a>
+        </div>
+    @endif
     <div class="table-responsive">
-    <table class="table table-sm table-hover small mb-0 align-middle">
-        <thead class="table-light"><tr><th>Nama</th><th>Tim</th><th>Masa kerja</th><th>DISC</th>
-            @foreach ($D::KOMITMEN + $D::KOMPETENSI as $l)<th class="text-center" title="{{ $l }}">{{ mb_substr($l, 0, 4) }}</th>@endforeach
-            <th>Komitmen</th><th>Kompetensi</th></tr></thead>
-        @foreach ($baris as $b)
+    <table class="table table-sm small mb-0 align-middle tabel-bulan">
+        <thead class="table-light"><tr><th class="text-start">Nama</th><th class="text-start">Tim</th><th>Masa kerja</th><th>DISC</th>
+            @foreach ($D::KOMITMEN + $D::KOMPETENSI as $l)<th title="{{ $l }}" style="cursor:help">{{ mb_substr($l, 0, 4) }}</th>@endforeach
+            <th class="text-start">Komitmen</th><th class="text-start">Kompetensi</th></tr></thead>
+        @foreach ($tampil as $b)
             <tr>
-                <td>{{ $b->staff->nama ?? '-' }}<br><small class="text-muted">{{ $b->staff->level ?? '' }} · {{ $b->staff->divisi ?? '' }}</small></td>
-                <td class="text-muted">{{ $b->disc->tim }}</td>
-                <td class="text-nowrap">{{ $b->staff?->mulai_kerja ? $b->staff->mulai_kerja->diffInYears(now()) . ' th' : '-' }}</td>
-                <td><span class="badge text-bg-light">{{ $b->disc->profil ?? '-' }}</span></td>
+                <td class="text-start text-nowrap"><div class="fw-medium">{{ $b->staff->nama ?? '-' }}</div><small class="text-muted">{{ $b->staff->level ?? '' }} · {{ $b->staff->divisi ?? '' }}</small></td>
+                <td class="text-start text-muted">{{ $b->disc->tim }}</td>
+                <td class="text-nowrap">{{ $b->staff?->mulai_kerja ? (int) $b->staff->mulai_kerja->diffInYears(now()) . ' th' : '-' }}</td>
+                <td class="text-nowrap">@forelse (array_filter(preg_split('/[^A-Za-z]/', strtoupper((string) $b->disc->profil))) as $h)<span class="chip-disc" style="background:{{ $warnaDisc[$h] ?? '#adb5bd' }}">{{ $h }}</span>@empty<span class="text-muted">-</span>@endforelse</td>
                 @foreach (array_keys($D::KOMITMEN + $D::KOMPETENSI) as $k)
-                    <td class="text-center {{ ($b->disc->$k ?? 9) <= 1 ? 'bg-danger-subtle' : (($b->disc->$k ?? 0) >= 4 ? 'bg-success-subtle' : '') }}">{{ $b->disc->$k ?? '·' }}</td>
+                    @php($v = $b->disc->$k)
+                    <td><span class="chip {{ $v === null ? 'kosong' : ($v >= 4 ? 'hijau' : ($v <= 2 ? 'merah' : '')) }}">{{ $v ?? '·' }}</span></td>
                 @endforeach
                 @foreach ([[$b->disc->komitmen, $b->katKomitmen], [$b->disc->kompetensi, $b->katKompetensi]] as [$nilai, $kat])
-                    <td class="text-nowrap">@if ($kat){{ $nilai }} <span class="badge text-bg-{{ ['Tinggi' => 'success', 'Menengah' => 'primary', 'Cukup' => 'warning', 'Rendah' => 'danger'][$kat] }}">{{ $kat }}</span>
+                    <td class="text-start text-nowrap">@if ($kat){{ $nilai }} <span class="badge" style="background:{{ $warnaGaya[$kat] }}">{{ $kat }}</span>
                         <br><small class="text-muted">{{ $D::GAYA[$kat] }}</small>@else - @endif</td>
                 @endforeach
             </tr>
         @endforeach
     </table>
     </div>
+    <div class="card-footer small text-muted"><span class="chip hijau">4</span> kuat &nbsp; <span class="chip merah">1–2</span> perlu dikembangkan &nbsp; · arahkan kursor ke judul kolom untuk nama aspek.</div>
 </div>
 
 @endif

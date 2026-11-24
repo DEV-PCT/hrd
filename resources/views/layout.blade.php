@@ -105,6 +105,15 @@
         .chip-nama { display: inline-flex; align-items: center; gap: .35rem; margin: .15rem .2rem .15rem 0; padding: .2rem .6rem; border-radius: 999px; font-size: .8rem; text-decoration: none; border: 1px solid transparent; }
         .chip-nama:hover { filter: brightness(.95); }
         .chip-nama .titik { width: 8px; height: 8px; border-radius: 50%; }
+        /* DISC */
+        .matriks-disc th { background: #f1f5fb; color: #475467; border-color: #e4e8ee; }
+        .matriks-disc .sel { display: block; padding: .45rem; border-radius: .4rem; font-weight: 700; text-decoration: none; transition: transform .1s; }
+        .matriks-disc a.sel:hover { transform: scale(1.06); }
+        .matriks-disc .sel.aktif { outline: 3px solid #344054; outline-offset: -1px; }
+        .matriks-disc .sel.kosong { color: #c0c6cf; font-weight: 400; }
+        .chip-disc { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; padding: 0 .3em; margin-right: 2px; border-radius: .35rem; color: #fff; font-size: .75rem; font-weight: 700; }
+        .tabel-bulan .chip.hijau { background: #d1f2dd; color: #1e7e34; font-weight: 600; }
+        .tabel-bulan .chip.merah { background: #ffd9dc; color: #b42318; font-weight: 600; }
         /* Sapaan Dashboard Saya */
         .content .card.sapaan { background: linear-gradient(120deg, #0d6efd, #17a2b8); color: #fff; }
         .sapaan .ikon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.6rem; background: rgba(255,255,255,.2); color: #fff; }
