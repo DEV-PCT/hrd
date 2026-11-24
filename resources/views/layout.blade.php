@@ -72,14 +72,19 @@
         .batang { border-radius: 4px; padding: 4px 2px; }
         .batang-jalur { height: 14px; border-radius: 7px; background: #eef1f5; }
         .batang-isi { border-radius: 7px; background: linear-gradient(90deg, #4f8bff, #0d6efd); }
-        .batang:nth-child(5n+2) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #3ecf8e, #28a745); }
-        .batang:nth-child(5n+3) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #ffb547, #fd7e14); }
-        .batang:nth-child(5n+4) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #3fd0e4, #17a2b8); }
-        .batang:nth-child(5n+5) .batang-isi:not(.kosong) { background: linear-gradient(90deg, #a07ee6, #6f42c1); }
         .batang-nilai { font-weight: 600; color: #344054; }
         /* Sorotan sel peta panas (bg-warning-subtle dll.) lebih tegas */
         .content .table .bg-warning-subtle, .content .table .table-warning { background: #ffe8a3 !important; font-weight: 600; }
         .content .table .bg-danger-subtle { background: #ffd0d4 !important; font-weight: 600; }
+        /* Tabel bulanan (kehadiran): kolom rata tengah, angka sebagai chip */
+        .tabel-bulan th, .tabel-bulan td { text-align: center; font-variant-numeric: tabular-nums; padding: .45rem .35rem; }
+        .tabel-bulan tbody tr:nth-child(even) > * { background: #fafbfd; }
+        .tabel-bulan .chip { display: inline-block; min-width: 2.6em; padding: .15em .45em; border-radius: 999px; font-weight: 500; color: #344054; }
+        .tabel-bulan .chip.nol, .tabel-bulan .chip.kosong { color: #c0c6cf; font-weight: 400; }
+        .chip.kuning { background: #fff1c2; color: #8a5a00 !important; font-weight: 600 !important; display: inline-block; padding: .15em .5em; border-radius: 999px; }
+        .chip.merah { background: #ffd9dc; color: #b42318 !important; font-weight: 600 !important; display: inline-block; padding: .15em .5em; border-radius: 999px; }
+        .absen { display: inline-block; margin-top: 2px; font-size: .7rem; padding: .05em .45em; border-radius: 999px; background: #eef2f6; color: #475467; border: 1px solid #dde3ea; }
+        .tabel-bulan .kolom-total { font-weight: 700; color: #0d6efd; background: #f1f6ff !important; }
         @media (min-width: 992px) { .sidebar { position: fixed; top: 0; bottom: 0; } .content { margin-left: 240px; } }
 
         /* Bilah progres AJAX (hrd.js) */

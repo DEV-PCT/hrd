@@ -5,7 +5,9 @@
     $B = \App\Models\Kehadiran::BULAN;
     $url = fn ($ubah) => route('dashboard.pegawai', array_filter(['tab' => $tab, 'tahun' => $tahun, 'kelompok' => $kelompok] + $ubah));
     // Warna sel menit terlambat: makin lama makin merah
-    $panas = fn ($v) => $v === null ? 'text-muted' : ($v >= 60 ? 'bg-danger-subtle' : ($v >= 30 ? 'bg-warning-subtle' : ''));
+    // Nilai bulanan sebagai chip: merah ≥60, kuning ≥30, abu = 0, titik = belum ada data
+    $panas = fn ($v) => $v === null ? 'kosong' : ($v >= 60 ? 'merah' : ($v >= 30 ? 'kuning' : ($v == 0 ? 'nol' : '')));
+    $chip = fn ($v, $warna = true) => '<span class="chip ' . ($warna ? $panas($v) : ($v === null ? 'kosong' : ($v == 0 ? 'nol' : ''))) . '">' . ($v ?? '·') . '</span>';
 @endphp
 
 @section('content')
@@ -38,11 +40,11 @@
                 <div class="col-xl-6">
                     <h6 class="small text-muted text-uppercase fw-semibold">{{ $judul }}</h6>
                     <div class="table-responsive">
-                    <table class="table table-sm small mb-0">
-                        <thead class="table-light"><tr><th>Kelompok</th>@foreach ($B as $b)<th class="text-end">{{ $b }}</th>@endforeach</tr></thead>
+                    <table class="table table-sm small mb-0 tabel-bulan">
+                        <thead class="table-light"><tr><th class="text-start">Kelompok</th>@foreach ($B as $b)<th>{{ $b }}</th>@endforeach</tr></thead>
                         @foreach ($daftarKelompok as $k)
-                            <tr class="{{ $k === $kelompok ? 'table-primary' : '' }}"><td class="text-nowrap">{{ $k }}</td>
-                                @foreach ($rata[$k] ?? [] as $v)<td class="text-end {{ $judul[0] === 'R' && str_contains($judul, 'menit') ? $panas($v) : '' }}">{{ $v ?? '·' }}</td>@endforeach</tr>
+                            <tr class="{{ $k === $kelompok ? 'table-primary' : '' }}"><td class="text-nowrap text-start fw-medium">{{ $k }}</td>
+                                @foreach ($rata[$k] ?? [] as $v)<td>{!! $chip($v, str_contains($judul, 'menit')) !!}</td>@endforeach</tr>
                         @endforeach
                     </table>
                     </div>
@@ -70,20 +72,20 @@
     <div class="col-xl-8"><div class="card h-100">
         <div class="card-header">Rincian per Pegawai <small class="text-muted">· menit terlambat / hari tidak hadir</small></div>
         <div class="table-responsive" style="max-height:520px">
-        <table class="table table-sm small mb-0 align-middle">
-            <thead class="table-light sticky-top"><tr><th>Nama</th>@foreach ($B as $b)<th class="text-end">{{ $b }}</th>@endforeach<th class="text-end">Total</th></tr></thead>
+        <table class="table table-sm small mb-0 align-middle tabel-bulan">
+            <thead class="table-light sticky-top"><tr><th class="text-start">Nama</th>@foreach ($B as $b)<th>{{ $b }}</th>@endforeach<th>Total</th></tr></thead>
             @foreach ($baris as $o)
                 <tr>
-                    <td class="text-nowrap">{{ \Illuminate\Support\Str::limit($o->nama, 28) }}<br><small class="text-muted">{{ $o->kelompok }}</small></td>
+                    <td class="text-nowrap text-start"><div class="fw-medium">{{ \Illuminate\Support\Str::limit($o->nama, 28) }}</div><small class="text-muted">{{ $o->kelompok }}</small></td>
                     @foreach ($B as $i => $b)
-                        <td class="text-end {{ $panas($o->terlambat[$i]) }}">{{ $o->terlambat[$i] ?? '·' }}@if ($o->absen[$i])<br><span class="badge text-bg-secondary">{{ $o->absen[$i] + 0 }} hr</span>@endif</td>
+                        <td>{!! $chip($o->terlambat[$i]) !!}@if ($o->absen[$i])<div><span class="absen">{{ $o->absen[$i] + 0 }} hr</span></div>@endif</td>
                     @endforeach
-                    <td class="text-end fw-semibold">{{ $o->totalTerlambat }}@if ($o->totalAbsen)<br><span class="badge text-bg-secondary">{{ $o->totalAbsen + 0 }} hr</span>@endif</td>
+                    <td class="kolom-total">{{ $o->totalTerlambat }}@if ($o->totalAbsen)<div><span class="absen">{{ $o->totalAbsen + 0 }} hr</span></div>@endif</td>
                 </tr>
             @endforeach
         </table>
         </div>
-        <div class="card-footer small text-muted">Kuning ≥ 30 menit, merah ≥ 60 menit dalam sebulan. Label abu-abu = hari tidak hadir.</div>
+        <div class="card-footer small text-muted"><span class="chip kuning">30+</span> ≥ 30 menit &nbsp; <span class="chip merah">60+</span> ≥ 60 menit sebulan &nbsp; <span class="absen">1 hr</span> hari tidak hadir &nbsp; · belum ada data</div>
     </div></div>
 </div>
 
