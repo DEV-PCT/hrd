@@ -35,6 +35,13 @@ class DashboardController extends Controller
                 ['Studi lanjut lewat target lulus', RiwayatPendidikan::where('status', 'Sedang Studi Lanjut')->where('tahun_lulus', '<', now()->year)->count(), route('riwayat.index')],
             ],
             'terakhirSinkron' => $terakhirSinkron ? \Illuminate\Support\Carbon::parse($terakhirSinkron) : null,
+            // Status pengajuan per jenis (gaya panel BAAK)
+            'perJenis' => JenisPengajuan::orderBy('urutan')->get(['id', 'nama'])->map(function ($j) {
+                $n = Pengajuan::where('jenis_pengajuan_id', $j->id)
+                    ->selectRaw("case when status in ('Disetujui','Ditolak','Dibatalkan') then status else 'Menunggu' end s, count(*) c")
+                    ->groupBy('s')->toBase()->pluck('c', 's');
+                return ['id' => $j->id, 'nama' => $j->nama, 'n' => $n];
+            }),
             'perDivisi' => $hitung(Staff::aktif()->whereNotNull('nip'), 'divisi', 'Tanpa divisi', 'distinct nip'), // per orang
         ];
     }

@@ -36,7 +36,7 @@ class PengajuanController extends Controller
                 ->when($r->status, fn ($w, $v) => $w->where('status', $v));
         } elseif ($tab === 'semua') {
             abort_unless($this->isAdmin(), 403);
-            $q->when($r->status, fn ($w, $v) => $w->where('status', $v))
+            $q->when($r->status, fn ($w, $v) => $v === 'Menunggu' ? $w->menunggu() : $w->where('status', $v))
                 ->when($r->jenis, fn ($w, $v) => $w->where('jenis_pengajuan_id', $v));
         } else {
             $q->whereIn('staff_id', $this->myStaffIds());

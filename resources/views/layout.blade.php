@@ -22,6 +22,18 @@
         /* Dashboard: kartu angka & grafik batang horizontal */
         .kartu { transition: box-shadow .15s; }
         .kartu:hover { box-shadow: 0 .25rem .75rem rgba(0,0,0,.08); }
+        /* Kartu berwarna (gaya small-box BAAK) */
+        .kotak { position: relative; border-radius: .5rem; overflow: hidden; color: #fff; display: flex; flex-direction: column; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.12); transition: transform .15s, box-shadow .15s; }
+        a.kotak:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 .4rem 1rem rgba(0,0,0,.15); }
+        .kotak .isi { padding: 1rem 1.1rem; flex: 1; position: relative; z-index: 1; }
+        .kotak .angka { font-size: 2.2rem; font-weight: 700; line-height: 1.1; }
+        .kotak .ket { font-size: .8rem; opacity: .85; }
+        .kotak .bi-latar { position: absolute; right: 1rem; top: .6rem; font-size: 4rem; opacity: .2; }
+        .kotak .kaki { background: rgba(0,0,0,.12); text-align: center; padding: .3rem; font-size: .85rem; }
+        .kotak.k-info { background: #17a2b8; } .kotak.k-danger { background: #dc3545; } .kotak.k-warning { background: #ffc107; color: #212529; }
+        .kotak.k-success { background: #28a745; } .kotak.k-primary { background: #0d6efd; } .kotak.k-purple { background: #6f42c1; }
+        a.kotak.k-warning:hover { color: #212529; }
+        .panel-status .list-group-item { padding: .55rem 1rem; }
         .kartu .ikon { width: 44px; height: 44px; border-radius: .5rem; display: grid; place-items: center; font-size: 1.25rem; background: #e7f0ff; color: #0d6efd; }
         .batang { display: grid; grid-template-columns: minmax(90px, 38%) 1fr 36px; align-items: center; gap: .5rem; padding: 3px 0; font-size: .875rem; }
         .batang:hover { background: #f8f9fa; }
