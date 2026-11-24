@@ -91,6 +91,20 @@
         .tindakan .beres { opacity: .6; }
         .bulat { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-size: 1rem; }
         .bulat.kuning { background: #fff3cd; color: #b58100; } .bulat.hijau { background: #d1f2dd; color: #1e7e34; } .bulat.ungu { background: #ece3fb; color: #6f42c1; }
+        /* Turn over: chip persen, kelompok kecil bergaris putus */
+        .chip.to { display: inline-block; min-width: 3.2em; padding: .15em .5em; border-radius: 999px; font-weight: 600; }
+        .chip.to.nol { color: #c0c6cf; font-weight: 400; }
+        .chip.to.kecil { background: transparent !important; border: 1px dashed currentColor; }
+        .tabel-bulan .sub { display: block; font-size: .7rem; color: #98a2b3; }
+        .tabel-bulan tr.baris-total > * { background: #f1f6ff !important; font-weight: 700; border-top: 2px solid #dbe4f0; }
+        /* Timeline yang keluar */
+        .timeline { position: relative; padding-left: 1.75rem; }
+        .timeline::before { content: ''; position: absolute; left: .55rem; top: .3rem; bottom: .3rem; width: 2px; background: #e4e8ee; }
+        .timeline .tl { position: relative; padding-bottom: 1rem; }
+        .timeline .tl::before { content: ''; position: absolute; left: -1.45rem; top: .25rem; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #0d6efd; }
+        .chip-nama { display: inline-flex; align-items: center; gap: .35rem; margin: .15rem .2rem .15rem 0; padding: .2rem .6rem; border-radius: 999px; font-size: .8rem; text-decoration: none; border: 1px solid transparent; }
+        .chip-nama:hover { filter: brightness(.95); }
+        .chip-nama .titik { width: 8px; height: 8px; border-radius: 50%; }
         /* Sapaan Dashboard Saya */
         .content .card.sapaan { background: linear-gradient(120deg, #0d6efd, #17a2b8); color: #fff; }
         .sapaan .ikon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.6rem; background: rgba(255,255,255,.2); color: #fff; }

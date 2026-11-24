@@ -90,33 +90,69 @@
 </div>
 
 @elseif ($tab === 'turnover')
+    {{-- Chip persen turn over: merah >=20%, kuning >=10%; kelompok kecil (awal < 5) bergaris putus agar tidak menyesatkan --}}
+    @php($chipTo = function ($x) { if ($x['rasio'] === null) return '<span class="chip to nol">·</span>'; $p = round($x['rasio'] * 100); $w = $x['rasio'] >= 0.2 ? 'merah' : ($x['rasio'] >= 0.1 ? 'kuning' : ($p == 0 ? 'nol' : '')); $kecil = $x['awal'] < 5 && $p > 0; return '<span class="chip to ' . $w . ($kecil ? ' kecil' : '') . '"' . ($kecil ? ' title="Kelompok kecil, persentase kurang bermakna"' : '') . '>' . $p . '%' . ($kecil ? '*' : '') . '</span>'; })
+    @php($palet = ['#0d6efd', '#28a745', '#fd7e14', '#6f42c1', '#17a2b8', '#d63384', '#6c757d', '#20c997'])
+    @php($warnaKelompok = $turnover->keys()->values()->mapWithKeys(fn ($k, $i) => [$k => $palet[$i % count($palet)]]))
+    @php($r = $ringkasTurnover)
+    @php($pr = fn ($v) => $v === null ? '–' : round($v * 100, 1) . '%')
     <div class="card-body">
-        <p class="small text-muted mb-2">Turn over = jumlah yang keluar di tahun itu ÷ jumlah orang per 1 Januari. Dihitung dari tanggal keluar pegawai.
-            @if ($tanpaTanggal)<span class="text-warning">{{ $tanpaTanggal }} pegawai nonaktif belum punya tanggal keluar, jadi belum terhitung.</span>@endif</p>
+        @include('_kartu-angka', ['kolom' => 'row-cols-1 row-cols-sm-2 row-cols-xl-4', 'kartu' => [
+            ['Turn over ' . now()->year, $pr($r['rasioIni']), 'graph-down-arrow', null, 'keluar ÷ orang per 1 Januari', ($r['rasioIni'] ?? 0) >= 0.1 ? 'danger' : 'info'],
+            ['Keluar ' . now()->year, $r['keluarIni'], 'box-arrow-right', null, 'orang', 'warning'],
+            ['Rata-rata ' . $r['jumlahTahunRata'] . ' tahun', $pr($r['rata']), 'bar-chart-line', null, 'tahun-tahun sebelumnya', 'success'],
+            ['Tertinggi ' . now()->year, $r['tertinggi'] ?? '–', 'exclamation-triangle', null, $r['tertinggi'] ? $pr($r['rasioTertinggi']) . ' (kelompok ≥ 5 orang)' : 'belum ada', 'purple'],
+        ]])
+
+        @if ($tanpaTanggal)
+            <div class="alert alert-warning d-flex flex-wrap gap-2 align-items-center small py-2">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <span class="flex-grow-1"><strong>{{ $tanpaTanggal }} pegawai nonaktif</strong> belum punya tanggal keluar, jadi belum terhitung di turn over.</span>
+                <a href="{{ route('staff.index', ['status' => 'nonaktif']) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil-square me-1"></i>Lengkapi</a>
+            </div>
+        @endif
+
         <div class="table-responsive">
-        <table class="table table-sm small mb-0">
-            <thead class="table-light"><tr><th>Kelompok</th>@foreach ($tahunList as $t)<th class="text-end">{{ $t }}</th>@endforeach</tr></thead>
+        <table class="table table-sm small mb-0 tabel-bulan">
+            <thead class="table-light"><tr><th class="text-start">Kelompok</th>@foreach ($tahunList as $t)<th>{{ $t }}</th>@endforeach</tr></thead>
             @foreach ($turnover as $k => $per)
-                <tr><td class="text-nowrap">{{ $k }}</td>
+                <tr><td class="text-nowrap text-start fw-medium"><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:{{ $warnaKelompok[$k] }}"></span>{{ $k }}</td>
                     @foreach ($per as $x)
-                        <td class="text-end {{ ($x['rasio'] ?? 0) >= 0.2 ? 'bg-danger-subtle' : (($x['rasio'] ?? 0) >= 0.1 ? 'bg-warning-subtle' : '') }}"
-                            title="{{ $x['nama']->join(', ') }}">
-                            @if ($x['rasio'] !== null){{ round($x['rasio'] * 100) }}% <small class="text-muted">({{ $x['keluar'] }}/{{ $x['awal'] }})</small>@else · @endif</td>
+                        <td title="{{ $x['nama']->join(', ') }}">{!! $chipTo($x) !!}@if ($x['rasio'] !== null)<span class="sub">{{ $x['keluar'] }}/{{ $x['awal'] }}</span>@endif</td>
                     @endforeach
                 </tr>
             @endforeach
+            <tr class="baris-total"><td class="text-start">Total</td>
+                @foreach ($totalTurnover as $x)<td>{!! $chipTo($x + ['awal' => 99]) !!}@if ($x['rasio'] !== null)<span class="sub">{{ $x['keluar'] }}/{{ $x['awal'] }}</span>@endif</td>@endforeach</tr>
         </table>
         </div>
+        <div class="small text-muted mt-2">Turn over = jumlah yang keluar di tahun itu ÷ jumlah orang per 1 Januari, dihitung dari tanggal keluar.
+            <span class="chip to kuning">10%</span> ≥ 10% &nbsp; <span class="chip to merah">20%</span> ≥ 20% &nbsp; <span class="chip to merah kecil">100%*</span> kelompok &lt; 5 orang.</div>
     </div>
 </div>
 <div class="card">
-    <div class="card-header">Yang Keluar per Tahun</div>
-    <ul class="list-group list-group-flush small">
-        @foreach (array_reverse($tahunList) as $t)
-            @php($nama = $turnover->map(fn ($p, $k) => $p[$t]['nama']->map(fn ($n) => "$n ($k)"))->flatten())
-            @if ($nama->isNotEmpty())<li class="list-group-item"><strong>{{ $t }}</strong> · {{ $nama->join(', ') }}</li>@endif
-        @endforeach
-    </ul>
+    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-clock-history me-1"></i> Yang Keluar per Tahun</span>
+        <small class="fw-normal">@foreach ($warnaKelompok as $k => $w)<span class="text-nowrap me-2"><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:{{ $w }}"></span>{{ $k }}</span>@endforeach</small></div>
+    <div class="card-body">
+        <div class="timeline">
+            @php($ada = false)
+            @foreach (array_reverse($tahunList) as $t)
+                @php($orang = $turnover->flatMap(fn ($p, $k) => $p[$t]['orang']->map(fn ($o) => $o + ['kelompok' => $k])))
+                @if ($orang->isNotEmpty())
+                    @php($ada = true)
+                    <div class="tl">
+                        <div class="fw-semibold mb-1">{{ $t }} <span class="badge rounded-pill text-bg-light ms-1">{{ $orang->count() }} orang</span></div>
+                        @foreach ($orang as $o)
+                            @php($w = $warnaKelompok[$o['kelompok']])
+                            <a href="{{ route('staff.show', $o['id']) }}" class="chip-nama" style="background:{{ $w }}14;border-color:{{ $w }}40;color:#344054" title="{{ $o['kelompok'] }}">
+                                <span class="titik" style="background:{{ $w }}"></span>{{ $o['nama'] }}</a>
+                        @endforeach
+                    </div>
+                @endif
+            @endforeach
+            @unless ($ada)<div class="text-muted small">Belum ada pegawai yang keluar dengan tanggal keluar tercatat.</div>@endunless
+        </div>
+    </div>
 </div>
 
 @elseif ($tab === 'disc')

@@ -121,11 +121,26 @@ class DashboardPegawaiController extends Controller
         $tabel = $semua->groupBy('kelompok')->map(fn ($g) => collect($tahunList)->mapWithKeys(function ($t) use ($g) {
             $awal = $g->filter(fn ($o) => (!$o->model->mulai_kerja || $o->model->mulai_kerja->year < $t) && (!$o->model->tanggal_keluar || $o->model->tanggal_keluar->year >= $t))->count();
             $keluar = $g->filter(fn ($o) => $o->model->tanggal_keluar?->year === $t);
-            return [$t => ['awal' => $awal, 'keluar' => $keluar->count(), 'nama' => $keluar->pluck('nama'), 'rasio' => $awal ? $keluar->count() / $awal : null]];
+            return [$t => ['awal' => $awal, 'keluar' => $keluar->count(), 'nama' => $keluar->pluck('nama'), 'orang' => $keluar->map(fn ($o) => ['id' => $o->model->id, 'nama' => $o->nama])->values(), 'rasio' => $awal ? $keluar->count() / $awal : null]];
         }));
+        // Total semua kelompok per tahun
+        $total = collect($tahunList)->mapWithKeys(function ($t) use ($tabel) {
+            $awal = $tabel->sum(fn ($p) => $p[$t]['awal']);
+            $keluar = $tabel->sum(fn ($p) => $p[$t]['keluar']);
+            return [$t => ['awal' => $awal, 'keluar' => $keluar, 'rasio' => $awal ? $keluar / $awal : null]];
+        });
+        $ini = now()->year;
+        $rasioList = $total->except($ini)->pluck('rasio')->filter(fn ($r) => $r !== null);
+        $tertinggi = $tabel->filter(fn ($p) => $p[$ini]['awal'] >= 5)->sortByDesc(fn ($p) => $p[$ini]['rasio'])->keys()->first();
         return [
             'tahunList' => $tahunList,
             'turnover' => $tabel,
+            'totalTurnover' => $total,
+            'ringkasTurnover' => [
+                'rasioIni' => $total[$ini]['rasio'], 'keluarIni' => $total[$ini]['keluar'],
+                'rata' => $rasioList->isEmpty() ? null : $rasioList->avg(), 'jumlahTahunRata' => $rasioList->count(),
+                'tertinggi' => $tertinggi, 'rasioTertinggi' => $tertinggi ? $tabel[$tertinggi][$ini]['rasio'] : null,
+            ],
             'tanpaTanggal' => Staff::where('aktif', false)->whereNull('tanggal_keluar')->whereNotNull('nip')->distinct()->count('nip'),
         ];
     }
