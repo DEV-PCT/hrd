@@ -30,10 +30,23 @@ class DashboardController extends Controller
                 ['Pengajuan menunggu HRD', Pengajuan::tugas($this->myStaffIds(), true)->count(), 'inbox', route('pengajuan.index', ['tab' => 'tugas']), 'semua jenis pengajuan'],
                 ['Studi lanjut', RiwayatPendidikan::where('status', 'Sedang Studi Lanjut')->count(), 'journal-bookmark', route('riwayat.index'), 'sedang berjalan'],
             ],
-            'tindakan' => [
-                ['Pegawai aktif belum punya atasan', Staff::jumlahOrang(Staff::aktif()->whereNull('atasan_id')), route('staff.atasan')],
-                ['Studi lanjut lewat target lulus', RiwayatPendidikan::where('status', 'Sedang Studi Lanjut')->where('tahun_lulus', '<', now()->year)->count(), route('riwayat.index')],
-            ],
+            // [label, jumlah, url, keterangan]; yang perlu dikerjakan tampil di atas
+            'tindakan' => collect([
+                ['Pegawai aktif belum punya atasan', Staff::jumlahOrang(Staff::aktif()->whereNull('atasan_id')), route('staff.index', ['atasan' => 'kosong']), 'Atur atasan agar alur persetujuan berjalan'],
+                ['Kontrak berakhir dalam 30 hari', Staff::aktif()->whereBetween('kontrak_berakhir', [today(), today()->addDays(30)])->count(), route('staff.index'), 'Perpanjang atau siapkan pengganti'],
+                ['Pengajuan menunggu HRD lebih dari 3 hari', Pengajuan::tugas($this->myStaffIds(), true)->where('updated_at', '<', now()->subDays(3))->count(), route('pengajuan.index', ['tab' => 'tugas']), 'Segera diproses'],
+                ['Nonaktif tanpa tanggal keluar', Staff::where('aktif', false)->whereNull('tanggal_keluar')->count(), route('staff.index', ['status' => 'nonaktif']), 'Isi agar Turn Over terhitung'],
+                ['Studi lanjut lewat target lulus', RiwayatPendidikan::where('status', 'Sedang Studi Lanjut')->where('tahun_lulus', '<', now()->year)->count(), route('riwayat.index'), 'Perbarui status studi'],
+            ])->sortBy(fn ($t) => $t[1] ? 0 : 1)->values(),
+            // Ulang tahun 7 hari ke depan (info)
+            'ultah' => Staff::aktif()->whereNotNull('tgl_lahir')->get(['id', 'nama', 'tgl_lahir'])
+                ->map(function ($st) {
+                    $d = $st->tgl_lahir->copy()->year(now()->year);
+                    if ($d->lt(today())) $d->addYear();
+                    $st->hari = (int) today()->diffInDays($d);
+                    return $st;
+                })
+                ->where('hari', '<=', 7)->sortBy('hari')->unique('nama')->values(),
             'terakhirSinkron' => $terakhirSinkron ? \Illuminate\Support\Carbon::parse($terakhirSinkron) : null,
             // Status pengajuan per jenis (gaya panel BAAK)
             'perJenis' => JenisPengajuan::orderBy('urutan')->get(['id', 'nama'])->map(function ($j) {
@@ -42,6 +55,7 @@ class DashboardController extends Controller
                     ->groupBy('s')->toBase()->pluck('c', 's');
                 return ['id' => $j->id, 'nama' => $j->nama, 'n' => $n];
             }),
+            'idDivisi' => Staff::aktif()->whereNotNull('id_divisi')->pluck('id_divisi', 'divisi'),
             'perDivisi' => $hitung(Staff::aktif()->whereNotNull('nip'), 'divisi', 'Tanpa divisi', 'distinct nip'), // per orang
         ];
     }

@@ -35,7 +35,7 @@
         a.kotak.k-warning:hover { color: #212529; }
         .panel-status .list-group-item { padding: .55rem 1rem; }
         .kartu .ikon { width: 44px; height: 44px; border-radius: .5rem; display: grid; place-items: center; font-size: 1.25rem; background: #e7f0ff; color: #0d6efd; }
-        .batang { display: grid; grid-template-columns: minmax(90px, 38%) 1fr 36px; align-items: center; gap: .5rem; padding: 3px 0; font-size: .875rem; }
+        .batang { display: grid; grid-template-columns: minmax(90px, 38%) 1fr auto; align-items: center; gap: .5rem; padding: 3px 0; font-size: .875rem; }
         .batang:hover { background: #f8f9fa; }
         .batang-jalur { background: #f1f3f5; border-radius: 4px; height: 12px; }
         .batang-isi { background: #0d6efd; height: 100%; border-radius: 4px; min-width: 2px; }
@@ -85,6 +85,12 @@
         .chip.merah { background: #ffd9dc; color: #b42318 !important; font-weight: 600 !important; display: inline-block; padding: .15em .5em; border-radius: 999px; }
         .absen { display: inline-block; margin-top: 2px; font-size: .7rem; padding: .05em .45em; border-radius: 999px; background: #eef2f6; color: #475467; border: 1px solid #dde3ea; }
         .tabel-bulan .kolom-total { font-weight: 700; color: #0d6efd; background: #f1f6ff !important; }
+        .batang-nilai { min-width: 36px; }
+        /* Daftar Perlu Ditindaklanjuti */
+        .tindakan .list-group-item { padding: .7rem 1rem; }
+        .tindakan .beres { opacity: .6; }
+        .bulat { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-size: 1rem; }
+        .bulat.kuning { background: #fff3cd; color: #b58100; } .bulat.hijau { background: #d1f2dd; color: #1e7e34; } .bulat.ungu { background: #ece3fb; color: #6f42c1; }
         /* Sapaan Dashboard Saya */
         .content .card.sapaan { background: linear-gradient(120deg, #0d6efd, #17a2b8); color: #fff; }
         .sapaan .ikon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.6rem; background: rgba(255,255,255,.2); color: #fff; }
