@@ -32,15 +32,19 @@ class StaffController extends Controller
         }
 
         $status = $request->input('status', 'aktif'); // default hanya pegawai aktif
-        $staff = Staff::with('atasan')
+        $filter = Staff::query()
             ->when($status !== 'semua', fn ($q) => $q->where('aktif', $status === 'aktif'))
             ->when($request->divisi, fn ($q, $v) => $q->where('id_divisi', $v))
             ->when($request->level, fn ($q, $v) => $q->where('id_level', $v))
             ->when($request->atasan === 'kosong', fn ($q) => $q->whereNull('atasan_id'))
             ->when($request->atasan === 'ada', fn ($q) => $q->whereNotNull('atasan_id'))
             ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('nama', 'like', "%$s%")->orWhere('nip', 'like', "%$s%")->orWhere('username', 'like', "%$s%")))
-            ->orderBy('nama')
-            ->paginate(50)->withQueryString();
+            ;
+        // Satu baris per orang: akun pertama (id terkecil) yang lolos filter per NIP; akun lainnya tampil sebagai chip
+        $utama = (clone $filter)->selectRaw('min(id)')->groupByRaw("coalesce(nullif(nip, ''), concat('#', id))");
+        $staff = (clone $filter)->with('atasan')->whereIn('id', $utama)->orderBy('nama')->paginate(50)->withQueryString();
+        $akunLain = Staff::whereIn('nip', $staff->pluck('nip')->filter())->orderByDesc('aktif')->orderBy('id')
+            ->get(['id', 'nip', 'username', 'divisi', 'level', 'aktif'])->groupBy('nip');
 
         // Kartu ringkasan (tidak ikut filter), dihitung per orang (NIP sama = 1)
         $nipAktif = Staff::aktif()->whereNotNull('nip')->where('nip', '!=', '')->pluck('nip')->unique();
@@ -53,7 +57,7 @@ class StaffController extends Controller
             ['Nonaktif', Staff::jumlahOrang(Staff::where('aktif', false)->whereNotIn('nip', $nipAktif)), 'person-x', route('staff.index', ['status' => 'nonaktif']), 'tanpa akun aktif lain'],
         ];
 
-        return view('staff.index', ['staff' => $staff, 'kartu' => $kartu] + $this->pilihan());
+        return view('staff.index', ['staff' => $staff, 'akunLain' => $akunLain, 'kartu' => $kartu] + $this->pilihan());
     }
 
     // Halaman Atasan & Bawahan: pilih atasan → lihat bawahannya → tambah/lepas bawahan sekaligus banyak.
@@ -61,20 +65,29 @@ class StaffController extends Controller
     public function atasan(Request $request)
     {
         $atasan = $request->atasan ? Staff::find($request->atasan) : null;
+        // Satu orang bisa punya beberapa akun (NIP sama): atasan & bawahan dihitung per orang
+        $akunAtasan = $atasan ? Staff::satuOrang([$atasan->id]) : collect();
+        $perOrang = fn ($q) => $q->whereIn('id', (clone $q)->selectRaw('min(id)')->groupByRaw("coalesce(nullif(nip, ''), concat('#', id))"));
         // Bawahan tampil semua (yang nonaktif ditandai, supaya bisa dilepas); calon atasan & kandidat hanya yang aktif
-        $bawahan = $atasan ? Staff::where('atasan_id', $atasan->id)->orderByDesc('aktif')->orderBy('divisi')->orderBy('nama')->get() : collect();
+        $bawahan = $atasan ? Staff::whereIn('atasan_id', $akunAtasan)->orderByDesc('aktif')->orderBy('divisi')->orderBy('nama')->get()
+            ->sortByDesc('aktif')->unique(fn ($b) => $b->nip ?: '#' . $b->id)->values() : collect();
 
-        $kandidat = $atasan ? Staff::with('atasan')->aktif()
-            ->where('id', '!=', $atasan->id)
-            ->where(fn ($q) => $q->whereNull('atasan_id')->orWhere('atasan_id', '!=', $atasan->id))
+        $kandidat = $atasan ? $perOrang(Staff::aktif()
+            ->whereNotIn('id', $akunAtasan)
+            ->where(fn ($q) => $q->whereNull('atasan_id')->orWhereNotIn('atasan_id', $akunAtasan))
             ->when($request->divisi, fn ($q, $v) => $q->where('id_divisi', $v))
             ->when($request->level, fn ($q, $v) => $q->where('id_level', $v))
             ->when($request->boolean('kosong'), fn ($q) => $q->whereNull('atasan_id'))
-            ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('nama', 'like', "%$s%")->orWhere('nip', 'like', "%$s%")->orWhere('username', 'like', "%$s%")))
-            ->orderBy('nama')->paginate(50)->withQueryString() : null;
+            ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('nama', 'like', "%$s%")->orWhere('nip', 'like', "%$s%")->orWhere('username', 'like', "%$s%"))))
+            ->with('atasan')->orderBy('nama')->paginate(50)->withQueryString() : null;
 
-        return view('staff.atasan', compact('atasan', 'bawahan', 'kandidat') + [
-            'semua' => Staff::aktif()->withCount('bawahan')->orderBy('nama')->get(['id', 'nama', 'level', 'divisi']),
+        // Calon atasan: satu pilihan per orang, jumlah bawahan dijumlah dari semua akunnya
+        $semua = Staff::aktif()->withCount('bawahan')->orderBy('id')->get(['id', 'nip', 'nama', 'level', 'divisi'])
+            ->groupBy(fn ($s) => $s->nip ?: '#' . $s->id)
+            ->map(fn ($g) => tap($g->first(), fn ($u) => $u->bawahan_count = $g->sum('bawahan_count')))
+            ->sortBy('nama')->values();
+
+        return view('staff.atasan', compact('atasan', 'bawahan', 'kandidat', 'semua') + [
             'tanpaAtasan' => Staff::jumlahOrang(Staff::aktif()->whereNull('atasan_id')),
         ] + $this->pilihan());
     }
@@ -93,9 +106,13 @@ class StaffController extends Controller
         for ($id = $data['atasan_id']; $id && !in_array($id, $terlarang); $id = Staff::whereKey($id)->value('atasan_id')) {
             $terlarang[] = $id;
         }
-        $ids = collect($data['pegawai'])->reject(fn ($id) => in_array($id, $terlarang));
-        $n = Staff::whereIn('id', $ids)->update(['atasan_id' => $data['atasan_id']]);
-        $dilewati = count($data['pegawai']) - $ids->count();
+        // Atasan berlaku per orang: semua akun dengan NIP sama ikut diatur (akun milik atasan & atasan-atasannya dikecualikan)
+        $terlarang = Staff::satuOrang($terlarang)->all();
+        $pilih = collect($data['pegawai'])->reject(fn ($id) => in_array($id, $terlarang));
+        $ids = Staff::satuOrang($pilih)->reject(fn ($id) => in_array($id, $terlarang));
+        $n = Staff::jumlahOrang(Staff::whereIn('id', $ids)) ?: $ids->count();
+        Staff::whereIn('id', $ids)->update(['atasan_id' => $data['atasan_id']]);
+        $dilewati = count($data['pegawai']) - $pilih->count();
 
         $pesan = $data['atasan_id']
             ? "{$n} pegawai dijadikan bawahan dari: " . Staff::find($data['atasan_id'])->nama
@@ -139,6 +156,10 @@ class StaffController extends Controller
         $this->keApi(fn () => $api->tulis('PATCH', "/staff/{$staff->api_id}", $this->payloadStaff($data)));
 
         $staff->update($this->lokal($data));
+        // Atasan berlaku per orang: akun lain dengan NIP sama ikut
+        if ($staff->nip && array_key_exists('atasan_id', $data)) {
+            Staff::where('nip', $staff->nip)->whereKeyNot($staff->id)->update(['atasan_id' => $staff->atasan_id]);
+        }
         return redirect()->route('staff.show', $staff)->with('ok', "Data {$staff->nama} disimpan ke eUniversity & HRD.");
     }
 
@@ -161,7 +182,7 @@ class StaffController extends Controller
             'id_divisi' => 'required|integer',
             'id_level' => 'required|integer',
             // Isian HRD
-            'atasan_id' => ['nullable', Rule::exists('staffs', 'id'), Rule::notIn([$staff?->id])],
+            'atasan_id' => ['nullable', Rule::exists('staffs', 'id'), Rule::notIn($staff ? Staff::satuOrang([$staff->id])->all() : [])],
             'status_kepegawaian' => ['nullable', Rule::in(Staff::STATUS)],
         ], ['atasan_id.not_in' => 'Atasan tidak boleh diri sendiri.']);
         // Pasangan divisi × level harus ada di master struktur eUniversity (bila sudah disinkron)

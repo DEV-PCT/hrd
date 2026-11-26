@@ -45,3 +45,9 @@ Artisan::command('hrd:impor-dashboard {hrd} {dosen} {--simpan}', function (strin
     $this->option('simpan') ? DB::commit() : DB::rollBack();
     $this->line($this->option('simpan') ? 'Tersimpan.' : 'Uji saja, tidak disimpan. Tambahkan --simpan untuk menyimpan.');
 })->purpose('Impor data kepegawaian, jafung & rasio dari spreadsheet Dashboard HRD/Dosen');
+
+// Atasan berlaku per orang: isi atasan akun lain (NIP sama) yang masih kosong. Aman diulang.
+Artisan::command('hrd:samakan-atasan', function () {
+    $n = \App\Models\Staff::samakanAtasan();
+    $this->info("{$n} akun diisi atasannya mengikuti akun lain dengan NIP sama.");
+})->purpose('Samakan atasan antar-akun milik orang yang sama');

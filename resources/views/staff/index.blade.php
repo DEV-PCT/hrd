@@ -47,7 +47,9 @@
     @forelse ($staff as $s)
         <tr>
             <td>{{ $s->nip }}</td>
-            <td><a href="{{ route('staff.show', $s) }}">{{ $s->nama }}</a>@unless ($s->aktif) <span class="badge text-bg-secondary">Nonaktif</span>@endunless<br><small class="text-muted">{{ $s->username }}</small></td>
+            <td><a href="{{ route('staff.show', $s) }}">{{ $s->nama }}</a>@unless ($s->aktif) <span class="badge text-bg-secondary">Nonaktif</span>@endunless<br><small class="text-muted">{{ $s->username }}</small>
+                @php($lain = ($akunLain[$s->nip] ?? collect())->where('id', '!=', $s->id))
+                @if ($lain->isNotEmpty())<div class="mt-1">@foreach ($lain as $a)<a href="{{ route('staff.show', $a) }}" class="badge rounded-pill text-bg-light border text-decoration-none fw-normal me-1 {{ $a->aktif ? '' : 'opacity-50' }}" title="Akun lain orang yang sama{{ $a->aktif ? '' : ' (nonaktif)' }}"><i class="bi bi-person-badge me-1"></i>{{ $a->username }} · {{ $a->divisi }}</a>@endforeach</div>@endif</td>
             <td>{{ $s->divisi }}</td>
             <td>{{ $s->level }}</td>
             <td>{!! $s->atasan ? e($s->atasan->nama).'<br><small class="text-muted">'.e($s->atasan->level).'</small>' : '<span class="badge text-bg-warning">Belum diatur</span>' !!}</td>

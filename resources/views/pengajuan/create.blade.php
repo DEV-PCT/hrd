@@ -39,6 +39,14 @@
     </div>
 @else
     {{-- Langkah 2: isi form --}}
+    @if (in_array('atasan', $jenis->tahapan ?? []) && $staff && !$staff->atasan)
+        <div class="alert alert-warning d-flex gap-2 align-items-start" style="max-width:820px">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div><strong>Anda belum punya atasan di data pegawai.</strong> Pengajuan ini akan <u>melewati tahap persetujuan atasan</u> dan langsung ke {{ \App\Models\JenisPengajuan::teksAlur(array_values(array_diff($jenis->tahapan, ['atasan']))) ?: 'HRD' }}.
+                Bila seharusnya disetujui atasan dulu, hubungi HRD untuk mengatur atasan Anda sebelum mengirim.
+                @can('admin')<a href="{{ route('staff.atasan') }}" class="alert-link">Atur atasan</a>@endcan</div>
+        </div>
+    @endif
     <form method="post" action="{{ route('pengajuan.store') }}" enctype="multipart/form-data" class="card" style="max-width:820px"><div class="card-body">
         @csrf
         <input type="hidden" name="jenis_pengajuan_id" value="{{ $jenis->id }}">

@@ -24,6 +24,32 @@ class Staff extends Model
         return $nip ? static::where('nip', $nip)->orderByDesc('aktif')->orderBy('id')->first() : null;
     }
 
+    // Semua akun milik orang-orang dari daftar akun $ids (NIP sama = orang sama; tanpa NIP = akun itu saja)
+    public static function satuOrang(iterable $ids): \Illuminate\Support\Collection
+    {
+        $ids = collect($ids)->filter()->values();
+        $nip = static::whereIn('id', $ids)->whereNotNull('nip')->where('nip', '!=', '')->pluck('nip');
+        return $ids->merge($nip->isEmpty() ? [] : static::whereIn('nip', $nip)->pluck('id'))->unique()->values();
+    }
+
+    /**
+     * Atasan berlaku per orang: akun lain dengan NIP sama yang atasannya kosong diisi atasan akun utamanya
+     * (atau akun mana pun yang sudah diisi). Akun yang sudah punya atasan berbeda tidak ditimpa. Mengembalikan jumlah akun yang diisi.
+     */
+    public static function samakanAtasan(?iterable $nips = null): int
+    {
+        $n = 0;
+        $q = static::whereNotNull('nip')->where('nip', '!=', '')->whereNotNull('atasan_id')
+            ->when($nips !== null, fn ($w) => $w->whereIn('nip', collect($nips)->filter()));
+        foreach ($q->orderByDesc('aktif')->orderBy('id')->get(['id', 'nip', 'atasan_id'])->unique('nip') as $s) {
+            // jangan jadikan orang itu atasan bagi dirinya sendiri
+            $akunSendiri = static::where('nip', $s->nip)->pluck('id');
+            if ($akunSendiri->contains($s->atasan_id)) continue;
+            $n += static::where('nip', $s->nip)->whereNull('atasan_id')->update(['atasan_id' => $s->atasan_id]);
+        }
+        return $n;
+    }
+
     // Semua akun staff milik orang yang sama (NIP sama) dengan akun $id
     public static function akunSatuOrang(?int $id): \Illuminate\Support\Collection
     {

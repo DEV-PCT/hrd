@@ -51,6 +51,8 @@ class Sinkron
                     'disinkron_at' => now(),
                 ]);
             }
+            // Akun baru dari eUniversity untuk orang yang sudah ada: atasan mengikuti akun lain dengan NIP sama
+            Staff::samakanAtasan();
             // Pegawai yang sudah dihapus di eUniversity ikut dihapus di HRD (tautan atasan/dosen/akun dilepas)
             $hilang = Staff::whereNotNull('api_id')->whereNotIn('api_id', $staff->pluck('idStaff'))->pluck('id');
             // Yang punya pengajuan (arsip surat) tidak dihapus, cukup dinonaktifkan (FK pengajuan.staff_id restrict)
