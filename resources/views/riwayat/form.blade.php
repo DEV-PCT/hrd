@@ -15,6 +15,7 @@
     @csrf
     @if ($riwayat->exists) @method('put') @endif
     <input type="hidden" name="staff_id" value="{{ $riwayat->staff_id }}">
+    @if (request('kembali') === 'riwayat')<input type="hidden" name="kembali" value="riwayat">@endif
     <input type="hidden" name="dosen_id" value="{{ $riwayat->dosen_id }}">
 
     <div class="row g-3">

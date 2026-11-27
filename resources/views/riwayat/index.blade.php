@@ -10,6 +10,7 @@
 {{-- Tambah riwayat: pilih pegawai dulu, lalu ke form riwayat miliknya --}}
 <div class="modal fade" id="modalTambahRiwayat" tabindex="-1">
     <div class="modal-dialog"><form method="get" action="{{ route('riwayat.create') }}" class="modal-content">
+        <input type="hidden" name="kembali" value="riwayat">
         <div class="modal-header"><h5 class="modal-title">Tambah Riwayat Pendidikan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
             <label class="form-label">Pegawai *</label>
@@ -48,7 +49,8 @@
 <div class="card">
 <form class="bar-filter">
     <select name="status" class="form-select" onchange="this.form.submit()">
-        @foreach (\App\Models\RiwayatPendidikan::STATUS as $o)<option @selected(request('status', 'Sedang Studi Lanjut') == $o)>{{ $o }}</option>@endforeach
+        <option value="">Semua status</option>
+        @foreach (\App\Models\RiwayatPendidikan::STATUS as $o)<option @selected(request('status') == $o)>{{ $o }}</option>@endforeach
     </select>
     <select name="jenjang" class="form-select" onchange="this.form.submit()">
         <option value="">Semua jenjang</option>
@@ -58,11 +60,18 @@
         <option value="">Semua pembiayaan</option>
         @foreach (\App\Models\RiwayatPendidikan::PEMBIAYAAN as $o)<option @selected(request('pembiayaan') == $o)>{{ $o }}</option>@endforeach
     </select>
+    <div class="input-group">
+        <input name="q" class="form-control" value="{{ request('q') }}" placeholder="Cari nama / NIP / institusi">
+        <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+    </div>
+    @if (request()->hasAny(['status', 'jenjang', 'pembiayaan', 'q']) && array_filter(request()->only(['status', 'jenjang', 'pembiayaan', 'q'])))
+        <a href="{{ route('riwayat.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Reset</a>
+    @endif
     <span class="info">{{ $studi->total() }} data</span>
 </form>
 <div class="table-responsive">
 <table class="table table-hover mb-0 align-middle">
-    <thead><tr><th>Nama</th><th>Jenjang</th><th>Institusi / Prodi</th><th>Masuk</th><th>{{ request('status', 'Sedang Studi Lanjut') === 'Lulus' ? 'Lulus' : 'Target' }}</th><th>Pembiayaan</th><th></th></tr></thead>
+    <thead><tr><th>Nama</th><th>Jenjang</th><th>Institusi / Prodi</th><th>Masuk</th><th>Lulus / Target</th><th>Status</th><th>Pembiayaan</th><th></th></tr></thead>
     <tbody>
     @forelse ($studi as $r)
         @php($terlambat = $r->status === 'Sedang Studi Lanjut' && $r->tahun_lulus && $r->tahun_lulus < now()->year)
@@ -72,11 +81,12 @@
             <td>{{ $r->institusi }}@if ($r->program_studi)<br><small class="text-muted">{{ $r->program_studi }}</small>@endif</td>
             <td>{{ $r->tahun_masuk ?? '-' }}</td>
             <td class="{{ $terlambat ? 'text-danger fw-semibold' : '' }}">{{ $r->tahun_lulus ?? '-' }}@if ($terlambat)<br><small>lewat target</small>@endif</td>
+            <td><span class="badge text-bg-{{ ['Lulus' => 'success', 'Sedang Studi Lanjut' => 'primary'][$r->status] ?? 'secondary' }}">{{ $r->status }}</span></td>
             <td>{{ $r->pembiayaan ?? '-' }}</td>
             <td class="text-end"><a href="{{ route('riwayat.edit', $r) }}" class="btn btn-sm btn-outline-secondary">Ubah</a></td>
         </tr>
     @empty
-        <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data.</td></tr>
     @endforelse
     </tbody>
 </table>

@@ -26,10 +26,12 @@ class RiwayatController extends Controller
     public function index(Request $request)
     {
         $studi = RiwayatPendidikan::with('staff', 'dosen')
-            ->where('status', $request->input('status', 'Sedang Studi Lanjut'))
+            ->when($request->status, fn ($q, $v) => $q->where('status', $v)) // default: semua status
             ->when($request->jenjang, fn ($q, $v) => $q->where('jenjang', $v))
             ->when($request->pembiayaan, fn ($q, $v) => $q->where('pembiayaan', $v))
-            ->orderBy('tahun_lulus')
+            ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->whereHas('staff', fn ($x) => $x->where('nama', 'like', "%$s%")->orWhere('nip', 'like', "%$s%"))
+                ->orWhereHas('dosen', fn ($x) => $x->where('nama', 'like', "%$s%"))->orWhere('institusi', 'like', "%$s%")->orWhere('program_studi', 'like', "%$s%")))
+            ->latest('id')
             ->paginate(50)->withQueryString();
 
         $komposisi = Dosen::where('aktif', true)
@@ -180,6 +182,8 @@ class RiwayatController extends Controller
 
     private function kembali(RiwayatPendidikan $r): string
     {
+        // Ditambah dari halaman Studi Lanjut → kembali ke daftar; selain itu ke profil pemiliknya
+        if (request('kembali') === 'riwayat') return route('riwayat.index');
         return $r->staff_id ? route('staff.show', $r->staff_id) : route('dosen.show', $r->dosen_id);
     }
 }
