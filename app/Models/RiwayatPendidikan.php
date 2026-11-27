@@ -31,14 +31,23 @@ class RiwayatPendidikan extends Model
     }
 
     // Riwayat milik satu orang: dosen yang juga pegawai punya satu riwayat gabungan
+    // Akun pegawai & data dosen milik orang yang sama (NIP sama = satu orang; dosen tertaut ke salah satu akunnya)
+    public static function pemilik(?Staff $staff, ?Dosen $dosen): array
+    {
+        $staffIds = Staff::satuOrang(array_filter([$staff?->id, $dosen?->staff_id]));
+        $dosenIds = collect(array_filter([$dosen?->id]))
+            ->merge($staffIds->isEmpty() ? [] : Dosen::whereIn('staff_id', $staffIds)->pluck('id'))->unique()->values();
+        return [$staffIds, $dosenIds];
+    }
+
+    // Riwayat satu orang: dari akun pegawai mana pun miliknya maupun data dosennya
     public static function milik(?Staff $staff, ?Dosen $dosen)
     {
-        $staffId = $staff?->id ?? $dosen?->staff_id;
-        $dosenId = $dosen?->id ?? $staff?->dosen?->id;
+        [$staffIds, $dosenIds] = self::pemilik($staff, $dosen);
         return self::where(fn ($q) => $q
-            ->when($staffId, fn ($w) => $w->orWhere('staff_id', $staffId))
-            ->when($dosenId, fn ($w) => $w->orWhere('dosen_id', $dosenId))
-            ->when(!$staffId && !$dosenId, fn ($w) => $w->whereRaw('1 = 0')))
+            ->when($staffIds->isNotEmpty(), fn ($w) => $w->orWhereIn('staff_id', $staffIds))
+            ->when($dosenIds->isNotEmpty(), fn ($w) => $w->orWhereIn('dosen_id', $dosenIds))
+            ->when($staffIds->isEmpty() && $dosenIds->isEmpty(), fn ($w) => $w->whereRaw('1 = 0')))
             ->orderByDesc('tahun_lulus')->orderByDesc('tahun_masuk');
     }
 
@@ -57,8 +66,10 @@ class RiwayatPendidikan extends Model
         $dosen = $dosenId ? Dosen::find($dosenId) : null;
         $tertinggi = self::tertinggi(self::milik($staff, $dosen)->get());
 
-        $staff?->update(['pendidikan_terakhir' => $tertinggi]);
+        // Berlaku untuk semua akun & data dosen orang itu
+        [$staffIds, $dosenIds] = self::pemilik($staff, $dosen);
+        Staff::whereIn('id', $staffIds)->update(['pendidikan_terakhir' => $tertinggi]);
         // Pilihan pendidikan dosen hanya S1/S2/S3; selain itu isian manual dibiarkan
-        $dosen?->update(['pendidikan_terakhir' => in_array($tertinggi, ['S1', 'S2', 'S3']) ? $tertinggi : $dosen->pendidikan_terakhir]);
+        if (in_array($tertinggi, ['S1', 'S2', 'S3'])) Dosen::whereIn('id', $dosenIds)->update(['pendidikan_terakhir' => $tertinggi]);
     }
 }

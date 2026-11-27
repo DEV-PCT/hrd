@@ -16,9 +16,12 @@
             <label class="form-label">Pegawai *</label>
             <select name="staff_id" class="form-select" required>
                 <option value="">Pilih pegawai…</option>
-                @foreach (\App\Models\Staff::perOrang(\App\Models\Staff::aktif()) as $s)<option value="{{ $s->id }}">{{ $s->nama }} — {{ $s->nip }} · {{ $s->divisi }}</option>@endforeach
+                {{-- Satu pilihan per orang; semua divisi akunnya ditampilkan, ditandai bila juga dosen --}}
+                @php($akunAktif = \App\Models\Staff::aktif()->whereNotNull('nip')->get(['id', 'nip', 'divisi'])->groupBy('nip'))
+                @php($nipDosen = \App\Models\Staff::whereIn('id', \App\Models\Dosen::where('aktif', true)->pluck('staff_id')->filter())->pluck('nip')->flip())
+                @foreach (\App\Models\Staff::perOrang(\App\Models\Staff::aktif()) as $s)<option value="{{ $s->id }}">{{ $s->nama }} — {{ $s->nip }} · {{ ($akunAktif[$s->nip] ?? collect())->pluck('divisi')->filter()->unique()->join(', ') }}{{ isset($nipDosen[$s->nip]) ? ' · Dosen' : '' }}</option>@endforeach
             </select>
-            <div class="form-text">Untuk studi lanjut yang sedang berjalan, pilih status <strong>Sedang Studi Lanjut</strong> di form berikutnya.</div>
+            <div class="form-text">Riwayat berlaku untuk orangnya: tampil di semua akun pegawai dan profil dosennya. Untuk studi lanjut yang sedang berjalan, pilih status <strong>Sedang Studi Lanjut</strong> di form berikutnya.</div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button class="btn btn-primary">Lanjut <i class="bi bi-arrow-right ms-1"></i></button></div>
     </form></div>
