@@ -153,11 +153,7 @@ class StaffController extends Controller
     {
         $this->wajibScope('staff.update');
         $data = $this->validasi($request, $staff);
-        // NIP hanya dikirim bila berubah: satu orang bisa punya beberapa akun dengan NIP sama,
-        // dan eUniversity menolak NIP yang sudah dipakai akun lain ("NIP sudah digunakan")
-        $payload = $this->payloadStaff($data);
-        if ((string) $data['nip'] === (string) $staff->nip) unset($payload['nip']);
-        $this->keApi(fn () => $api->tulis('PATCH', "/staff/{$staff->api_id}", $payload));
+        $this->keApi(fn () => $api->tulis('PATCH', "/staff/{$staff->api_id}", $this->payloadStaff($data)));
 
         $staff->update($this->lokal($data));
         // Atasan berlaku per orang: akun lain dengan NIP sama ikut
