@@ -156,6 +156,11 @@ const HRD = (() => {
 
     function tukar(doc, baru) {
         document.title = doc.title;
+        // Modal Bootstrap yang terbuka saat pindah halaman: lapisan gelap & kunci scroll-nya tertinggal di body → bersihkan
+        document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
         document.getElementById('halaman').replaceWith(baru);
         const menuLama = document.getElementById('menu'), menuBaru = doc.getElementById('menu');
         if (menuLama && menuBaru) {
