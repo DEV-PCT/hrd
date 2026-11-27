@@ -2,10 +2,27 @@
 @section('title', 'Studi Lanjut')
 
 @section('actions')
-    <a href="{{ route('riwayat.impor') }}" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Impor Excel</a>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambahRiwayat"><i class="bi bi-plus-lg me-1"></i>Tambah Riwayat</button>
+    <a href="{{ route('riwayat.impor') }}" class="btn btn-outline-secondary"><i class="bi bi-upload me-1"></i>Impor Excel</a>
 @endsection
 
 @section('content')
+{{-- Tambah riwayat: pilih pegawai dulu, lalu ke form riwayat miliknya --}}
+<div class="modal fade" id="modalTambahRiwayat" tabindex="-1">
+    <div class="modal-dialog"><form method="get" action="{{ route('riwayat.create') }}" class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Tambah Riwayat Pendidikan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <label class="form-label">Pegawai *</label>
+            <select name="staff_id" class="form-select" required>
+                <option value="">Pilih pegawai…</option>
+                @foreach (\App\Models\Staff::perOrang(\App\Models\Staff::aktif()) as $s)<option value="{{ $s->id }}">{{ $s->nama }} — {{ $s->nip }} · {{ $s->divisi }}</option>@endforeach
+            </select>
+            <div class="form-text">Untuk studi lanjut yang sedang berjalan, pilih status <strong>Sedang Studi Lanjut</strong> di form berikutnya.</div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button class="btn btn-primary">Lanjut <i class="bi bi-arrow-right ms-1"></i></button></div>
+    </form></div>
+</div>
+
 <div class="row g-3 mb-3">
     <div class="col-lg-4">
         <div class="card h-100">
